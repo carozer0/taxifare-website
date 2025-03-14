@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NY Taxi Fare Map</title>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.min.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
+
+        .geocoder-container {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+
+        button {
+            padding: 10px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="geocoder-container">
+        <div id="pickup"></div>
+        <div id="dropoff"></div>
+        <button onclick="sendToPage01()">Aller à Page 01</button>
+    </div>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiY2Fyb3plcjAiLCJhIjoiY204OGtvZXk4MHJydDJrc2Zvcnh4cHF3YyJ9.EQmgQnfL0WpeBnF6h7RjSw';
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [-74.006, 40.7128],
+            zoom: 12
+        });
+
+        map.addControl(new mapboxgl.NavigationControl());
+
+        const pickupGeocoder = new MapboxGeocoder({
+            accessToken: mapboxgl.accessToken,
+            placeholder: 'Pickup location',
+            mapboxgl: mapboxgl
+        });
+
+        const dropoffGeocoder = new MapboxGeocoder({
+            accessToken: mapboxgl.accessToken,
+            placeholder: 'Drop-off location',
+            mapboxgl: mapboxgl
+        });
+
+        document.getElementById('pickup').appendChild(pickupGeocoder.onAdd(map));
+        document.getElementById('dropoff').appendChild(dropoffGeocoder.onAdd(map));
+
+        let pickupCoords = null;
+        let dropoffCoords = null;
+
+        pickupGeocoder.on('result', function(e) {
+            pickupCoords = e.result.geometry.coordinates;
+            console.log('Pickup Coordinates:', pickupCoords);
+        });
+
+        dropoffGeocoder.on('result', function(e) {
+            dropoffCoords = e.result.geometry.coordinates;
+            console.log('Dropoff Coordinates:', dropoffCoords);
+        });
+
+        function sendToPage01() {
+            if (pickupCoords && dropoffCoords) {
+                const url = new URL("http://localhost:8501/page_01");  // Redirige vers page_01.py
+
+                url.searchParams.append("pickup_latitude", pickupCoords[1]);
+                url.searchParams.append("pickup_longitude", pickupCoords[0]);
+                url.searchParams.append("dropoff_latitude", dropoffCoords[1]);
+                url.searchParams.append("dropoff_longitude", dropoffCoords[0]);
+
+                window.location.href = url; // Redirige vers page_01 avec les coordonnées
+            } else {
+                alert("Veuillez sélectionner les deux emplacements.");
+            }
+        }
+    </script>
+</body>
+</html>
